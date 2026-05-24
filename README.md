@@ -96,7 +96,7 @@ another computer on your network:
 
 - **Port:** 1884
 - **Username:** `mqtt`
-- **Password:** `AutoPassword`
+- **Password:** `Password`
 
 A small Python GUI client (`pager_gui_auth.py`) is included. On your workstation:
 
