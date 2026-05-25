@@ -7,6 +7,8 @@ builds MMDVMHost, frees the GPIO UART, sets up an MQTT broker, installs a
 boot-time service, optionally drives a small OLED display, and gives you a
 `sendpage` command to transmit a page.
 
+![POCSAG transmitter on a Raspberry Pi with MMDVM_HS_Hat](pocsag.jpg)
+
 > ⚠️ **Legal:** transmitting on the air requires a valid **amateur radio
 > licence**, and you are responsible for using a frequency, mode and power that
 > are legal for your licence in your country. The default 433.920 MHz is only an
@@ -16,8 +18,8 @@ boot-time service, optionally drives a small OLED display, and gives you a
 
 | Item | Notes |
 |------|-------|
-| **Raspberry Pi 4** | Tested okey.
-| **MMDVM_HS_Hat** | Single ADF7021, simplex, on the 40-pin GPIO header (BOOT0 = GPIO20, RESET = GPIO21). https://www.amazon.se/Hotspot-Raspbery-Digital-Worldwide-OLED-sk%C3%A4rm/dp/B0DN1B7LKR|
+| **Raspberry Pi 4** | Tested. Pi 3 / Zero 2 W should work but are untested. |
+| **MMDVM_HS_Hat** | Single ADF7021, simplex, on the 40-pin GPIO header (BOOT0 = GPIO20, RESET = GPIO21). https://www.amazon.se/Hotspot-Raspbery-Digital-Worldwide-OLED-sk%C3%A4rm/dp/B0DN1B7LKR/|
 | **0.96" SSD1306 OLED** *(optional)* | I²C, 128×64. |
 | **A POCSAG pager** | Set to your frequency, the paged RIC, 1200 baud, POCSAG. |
 | **microSD + PSU** | Standard Pi essentials. |
@@ -76,7 +78,7 @@ and `0.0.0.0:1884` (login required, for remote clients). A page is just
 daemon subscribes to that same topic, so it reflects pages from both `sendpage`
 and the remote GUI.
 
-## Remote client
+## Remote client (workstation)
 
 The included `pager_client.py` (Python/Tkinter) sends pages from another
 computer:
