@@ -16,8 +16,8 @@ boot-time service, optionally drives a small OLED display, and gives you a
 
 | Item | Notes |
 |------|-------|
-| **Raspberry Pi 4** | Tested. Pi 3 / Zero 2 W should work but are untested. |
-| **MMDVM_HS_Hat** | Single ADF7021, simplex, on the 40-pin GPIO header (BOOT0 = GPIO20, RESET = GPIO21). |
+| **Raspberry Pi 4** | Tested okey.
+| **MMDVM_HS_Hat** | Single ADF7021, simplex, on the 40-pin GPIO header (BOOT0 = GPIO20, RESET = GPIO21). https://www.amazon.se/Hotspot-Raspbery-Digital-Worldwide-OLED-sk%C3%A4rm/dp/B0DN1B7LKR|
 | **0.96" SSD1306 OLED** *(optional)* | I²C, 128×64. |
 | **A POCSAG pager** | Set to your frequency, the paged RIC, 1200 baud, POCSAG. |
 | **microSD + PSU** | Standard Pi essentials. |
