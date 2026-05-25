@@ -1,131 +1,155 @@
 # POCSAG Pager Transmitter
 
-A standalone POCSAG pager transmitter for the Raspberry Pi using a factory
-**MMDVM_HS_Hat** hotspot — **without Pi-Star and without DAPNET**.
-
-The included installer (`install-pocsag.sh`) builds and configures everything
-from a clean OS: it builds MMDVMHost, frees the GPIO UART, sets up the MQTT
-broker, installs a systemd service that starts on boot, and gives you a simple
+A standalone **POCSAG pager transmitter** for the Raspberry Pi using a factory
+**MMDVM_HS_Hat** hotspot — **no Pi-Star, no DAPNET**. One installer script
+(`install-pocsag.sh`) builds and configures everything from a clean OS: it
+builds MMDVMHost, frees the GPIO UART, sets up an MQTT broker, installs a
+boot-time service, optionally drives a small OLED display, and gives you a
 `sendpage` command to transmit a page.
 
-## Tested hardware
+> ⚠️ **Legal:** transmitting on the air requires a valid **amateur radio
+> licence**, and you are responsible for using a frequency, mode and power that
+> are legal for your licence in your country. The default 433.920 MHz is only an
+> example.
 
-This has been built and tested on:
+## Hardware
 
-- **Raspberry Pi 4**
-- **MMDVM_HS_Hat** (single ADF7021, simplex) on the 40-pin GPIO header
-- BOOT0 = GPIO20, RESET = GPIO21 (standard HS_Hat wiring)
+| Item | Notes |
+|------|-------|
+| **Raspberry Pi 4** | Tested. Pi 3 / Zero 2 W should work but are untested. |
+| **MMDVM_HS_Hat** | Single ADF7021, simplex, on the 40-pin GPIO header (BOOT0 = GPIO20, RESET = GPIO21). |
+| **0.96" SSD1306 OLED** *(optional)* | I²C, 128×64. |
+| **A POCSAG pager** | Set to your frequency, the paged RIC, 1200 baud, POCSAG. |
+| **microSD + PSU** | Standard Pi essentials. |
 
-It should also work on other Pi models that expose the GPIO UART (Pi 3, Pi Zero 2),
-but those are untested.
+The hat just seats on all 40 GPIO pins. The optional OLED wires to the Pi's
+I²C1 bus: **VCC → pin 1 (3.3 V)**, **GND → pin 6**, **SDA → pin 3**,
+**SCL → pin 5**.
 
 ## Requirements
 
-- **Raspberry Pi OS Lite (64-bit)** — flash it with the Raspberry Pi Imager.
-  A desktop image is not needed; Lite is recommended.
-- An MMDVM_HS_Hat seated on the GPIO header.
-https://www.amazon.se/UHF-Hotspot-modul-st%C3%B6der-D-Star-l%C3%A4gen-statusvisning/dp/B0FQJTJMGR
-- Network access to the Pi (SSH is enough).
+- **Raspberry Pi OS Lite (64-bit)** — flash with Raspberry Pi Imager.
+- An MMDVM_HS_Hat on the GPIO header.
+- Network/SSH access to the Pi.
 
-> **Note:** Transmitting on the air requires a valid amateur radio licence, and
-> you are responsible for using a frequency and power level that are legal in
-> your country. The default frequency in the installer (433.920 MHz) is an
-> example only.
+Everything else (build tools, MMDVMHost, mosquitto, OLED libraries) is installed
+by the script.
 
 ## Installation
 
-1. Flash **Raspberry Pi OS Lite (64-bit)** to an SD card and boot the Pi.
+```bash
+git clone https://github.com/<your-user>/<your-repo>.git
+cd <your-repo>
+sudo bash install-pocsag.sh
+```
 
-2. Copy `install-pocsag.sh` to the Pi (for example with `scp`, or clone this repo):
+Answer the prompts (callsign, frequency, test RIC). On **flash firmware?** answer
+**N** if your hat already works (firmware lives on the hat's own chip); answer
+**y** only if it's brand-new/blank (only the PWR LED lights, no blinking
+heartbeat). Choose **Y** for OLED if you have the screen.
 
-   ```bash
-   git clone https://github.com/<your-user>/<your-repo>.git
-   cd <your-repo>
-   ```
-
-3. Run the installer:
-
-   ```bash
-   sudo bash install-pocsag.sh
-   ```
-
-   Answer the prompts (callsign, frequency, test RIC). On the firmware question
-   answer **N** if your hat already works (firmware lives on the hat's own chip
-   and survives an SD-card reinstall); answer **y** only if the hat is brand-new
-   or blank (only the PWR LED lights, no blinking heartbeat).
-
-4. **Reboot** when the installer asks — this is required, because freeing the
-   GPIO UART only takes effect after a reboot:
-
-   ```bash
-   sudo reboot
-   ```
-
-After the reboot the service starts automatically.
+The installer **reboots automatically** at the end (10-second countdown, cancel
+with `Ctrl-C`). The reboot is required — freeing the GPIO UART and enabling I²C
+only take effect after a restart. The services then start on their own.
 
 ## Usage
 
-Send a page locally on the Pi:
-
 ```bash
-sendpage 1234567 "hello world"
+sendpage 1234567 "hello world"          # send a page
+systemctl status pocsag --no-pager      # check the service
+journalctl -u pocsag -n 20              # check the logs
 ```
 
-Check the service and logs:
+Set your pager to the chosen frequency, the paged RIC, **1200 baud, POCSAG**.
+Pages are limited to 80 characters.
 
-```bash
-systemctl status pocsag --no-pager
-journalctl -u pocsag -n 20
-```
-
-Set your pager to: the chosen frequency, the RIC you paged, **1200 baud, POCSAG**.
-
-## Flashing a blank hat
-
-If your hat is brand-new and has no firmware, flash it **after** the reboot
-(the GPIO UART must be live first):
-
-```bash
-sudo hs-flash
-```
-
-## Remote client (workstation)
-
-The installer opens an authenticated MQTT listener so you can send pages from
-another computer on your network:
-
-- **Port:** 1884
-- **Username:** `mqtt`
-- **Password:** `Password`
-
-A small Python GUI client (`pager_gui_auth.py`) is included. On your workstation:
-
-```bash
-pip install paho-mqtt          # plus 'sudo apt install python3-tk' on Linux
-python3 pager_gui_auth.py
-```
-
-Enter the Pi's IP address, port `1884`, the username and password above, a RIC
-and a message, then press **Send**. The settings (except the password) are saved
-to `~/.pager_client.json`.
+**Blank hat?** After the reboot, flash it with `sudo hs-flash` (only if it's
+actually blank).
 
 ## How it works
 
-- **MMDVMHost** is the POCSAG engine; it talks to the hat over the GPIO UART at
-  115200 baud and is configured for POCSAG only.
-- Modern MMDVMHost takes commands over **MQTT**, so a local **mosquitto** broker
-  is installed. MMDVMHost connects anonymously on a loopback-only listener
-  (127.0.0.1:1883), while remote clients use a separate authenticated listener
-  (port 1884).
-- Sending a page publishes `page <RIC> <message>` to the MQTT topic
-  `mmdvm/command`, which MMDVMHost transmits.
+MMDVMHost is the POCSAG engine, talking to the hat over the GPIO UART at 115200
+baud (POCSAG only). It takes commands over MQTT, so a local **mosquitto** broker
+runs with two listeners: `127.0.0.1:1883` (anonymous, loopback, for MMDVMHost)
+and `0.0.0.0:1884` (login required, for remote clients). A page is just
+`page <RIC> <message>` published to the topic `mmdvm/command`. The optional OLED
+daemon subscribes to that same topic, so it reflects pages from both `sendpage`
+and the remote GUI.
 
-## Files
+## Remote client
 
-- `install-pocsag.sh` — the all-in-one installer.
-- `pager_gui_auth.py` — workstation GUI client (authenticated MQTT).
+The included `pager_client.py` (Python/Tkinter) sends pages from another
+computer:
 
-## Disclaimer
+```bash
+pip install paho-mqtt          # plus 'sudo apt install python3-tk' on Linux
+python3 pager_client.py
+```
 
-This software is for amateur radio and educational use only. Use it only on
-frequencies and at power levels you are licensed and legally permitted to use.
+Connect to the Pi's IP, port `1884`, user `mqtt`, password `Password`
+(**change this** — see below). Settings save to `~/.pager_client.json`
+(password is never stored).
+
+## OLED display
+
+When installed, the `oled` service shows callsign / IP / frequency while idle,
+and **TX POCSAG + RIC** while paging. Quick check (stop the daemon first so it
+doesn't fight over the bus):
+
+```bash
+sudo systemctl stop oled
+i2cdetect -y 1            # expect 3c (sometimes 3d)
+sudo systemctl start oled
+```
+
+For a different address, a 128×32 panel, or an upside-down mount, edit the
+commented `Environment=` lines in `/etc/systemd/system/oled.service`, then
+`sudo systemctl daemon-reload && sudo systemctl restart oled`.
+
+## Troubleshooting
+
+**mosquitto won't start during install** — the password file must be readable by
+the `mosquitto` user:
+```bash
+sudo chown root:mosquitto /etc/mosquitto/passwd
+sudo chmod 640 /etc/mosquitto/passwd
+sudo systemctl restart mosquitto
+```
+
+**OLED blank / `/dev/i2c-1` missing** — `dtparam=i2c_arm=on` enables the I²C
+controller but the `i2c-dev` module creates the device node:
+```bash
+sudo raspi-config nonint do_i2c 0
+echo i2c-dev | sudo tee /etc/modules-load.d/i2c-dev.conf
+sudo modprobe i2c-dev
+sudo i2cdetect -y 1        # should show 3c
+```
+
+**Bus visible but no `3c`/`3d`** — wiring issue, recheck the four OLED pins.
+
+(The current installer already handles both fixes above.)
+
+## Key paths
+
+`/etc/pocsag/MMDVM.ini` · `/etc/mosquitto/conf.d/pager.conf` ·
+`/etc/systemd/system/{pocsag,oled}.service` · `/opt/oled/oled-status.py` ·
+`/usr/local/bin/{sendpage,hs-flash,hs-reset}`
+
+## Security
+
+The MQTT listener binds `0.0.0.0:1884` with the default password `Password` —
+**change it** and keep the Pi on a trusted LAN (don't expose port 1884 to the
+internet):
+```bash
+sudo mosquitto_passwd /etc/mosquitto/passwd mqtt
+sudo systemctl restart mosquitto
+```
+
+## Credits & licence
+
+Built on [MMDVMHost](https://github.com/g4klx/MMDVMHost) (G4KLX),
+[MMDVM_HS](https://github.com/juribeparada/MMDVM_HS) firmware (CA6JAU),
+[mosquitto](https://mosquitto.org/), and
+[luma.oled](https://github.com/rm-hull/luma.oled). For amateur radio and
+educational use only; use only on frequencies and power you are licensed for. No
+warranty.
