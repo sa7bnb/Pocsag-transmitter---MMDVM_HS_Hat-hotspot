@@ -1,4 +1,4 @@
-# POCSAG Pager Transmitter
+# POCSAG Pager Transmitter - Development in progress, not fully functional yet! 20260525 
 
 A standalone **POCSAG pager transmitter** for the Raspberry Pi using a factory
 **MMDVM_HS_Hat** hotspot — **no Pi-Star, no DAPNET**. One installer script
