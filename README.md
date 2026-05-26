@@ -1,4 +1,4 @@
-# POCSAG Pager Transmitter - Development in progress, not fully functional yet! 20260525 
+# POCSAG Pager Transmitter
 
 A standalone **POCSAG pager transmitter** for the Raspberry Pi using a factory
 **MMDVM_HS_Hat** hotspot — **no Pi-Star, no DAPNET**. One installer script
@@ -8,6 +8,8 @@ boot-time service, optionally drives a small OLED display, and gives you a
 `sendpage` command to transmit a page.
 
 ![POCSAG transmitter on a Raspberry Pi with MMDVM_HS_Hat](pocsag.jpg)
+
+🎥 **[Demo video](https://github.com/sa7bnb/Pocsag-transmitter---MMDVM_HS_Hat-hotspot/blob/main/Demo-Video.mp4)** — see the system in action.
 
 > ⚠️ **Legal:** transmitting on the air requires a valid **amateur radio
 > licence**, and you are responsible for using a frequency, mode and power that
